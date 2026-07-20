@@ -1,0 +1,37 @@
+name: iOS build
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - "ios/AISTRAM/**"
+      - ".github/workflows/ios-build.yml"
+  push:
+    paths:
+      - "ios/AISTRAM/**"
+      - ".github/workflows/ios-build.yml"
+
+jobs:
+  simulator-build:
+    runs-on: macos-15
+    defaults:
+      run:
+        working-directory: ios/AISTRAM
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install XcodeGen
+        run: brew install xcodegen
+      - name: Generate Xcode project
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL || 'https://build-check.supabase.co' }}
+          SUPABASE_PUBLISHABLE_KEY: ${{ secrets.SUPABASE_PUBLISHABLE_KEY }}
+        run: xcodegen generate
+      - name: Build for iPhone Simulator
+        run: >-
+          xcodebuild
+          -project AISTRAM.xcodeproj
+          -scheme AISTRAM
+          -sdk iphonesimulator
+          -destination 'generic/platform=iOS Simulator'
+          CODE_SIGNING_ALLOWED=NO
+          build
